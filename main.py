@@ -171,196 +171,301 @@ class WiFiManager:
         }
 
 
-# ============ ASCII ART HELPERS ============
-def get_fan_ascii(speed):
-    if speed < 20:
-        return '''
-      __
-    /    \\
-   |  ()  |
-    \\____/
-   [IDLE]'''
-    elif speed < 50:
-        return '''
-      __
-    / -- \\
-   | (--) |
-    \\____/
-   [SLOW]'''
-    elif speed < 80:
-        return '''
-      __
-    /~||~\\
-   | (><) |
-    \\~~~~/
-    [MED]'''
-    else:
-        return '''
-      __
-    /*||*\\
-   |*(><)*|
-    \\****/
-    [MAX]'''
-
-
-def get_bar(value, max_val, width=20):
-    pct = min(100, max(0, (value / max_val) * 100))
-    filled = int((pct / 100) * width)
-    empty = width - filled
-    return '[' + '#' * filled + '-' * empty + ']'
-
-
+# ============ TELEMETRY HELPERS ============
 def get_temp_status(temp):
     if temp < 35:
-        return 'COOL'
+        return 'Cool'
     elif temp < 50:
         return 'OK'
     elif temp < 65:
-        return 'WARM'
+        return 'Warm'
     else:
-        return 'HOT!'
+        return 'Hot'
+
+
+def _temp_class(temp):
+    if temp < 35:
+        return 'cool'
+    elif temp >= 65:
+        return 'hot'
+    return ''
+
+
+def _format_thousands(n):
+    s = str(int(n))
+    if len(s) <= 3:
+        return s
+    out = ''
+    while len(s) > 3:
+        out = ',' + s[-3:] + out
+        s = s[:-3]
+    return s + out
+
+
+def _spin_seconds(speed):
+    if speed < 5:
+        return '0'
+    return '{:.2f}'.format(3.0 - (speed / 100.0) * 2.5)
 
 
 # ============ HTML TEMPLATE ============
-def build_html_page(controller, temp, speed, rpm, wifi_status):
-    fan_art = get_fan_ascii(speed)
-    temp_bar = get_bar(temp, 80)
-    speed_bar = get_bar(speed, 100)
-    temp_status = get_temp_status(temp)
-    mode = 'MANUAL' if controller.manual_override is not None else 'AUTO'
-    mode_class = 'manual' if mode == 'MANUAL' else 'auto'
-    uptime = controller.get_uptime()
-    wifi_indicator = 'OK' if wifi_status['connected'] else 'RECONN'
-    
-    html = '''<!DOCTYPE html>
-<html>
+HTML_TEMPLATE = '''<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Noctua Fan Controller</title>
-    <meta charset="ASCII">
-    <meta http-equiv="refresh" content="2">
-    <style>
-        body {{
-            background: #1a1a2e;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            padding: 20px;
-            font-size: 14px;
-        }}
-        .container {{
-            max-width: 500px;
-            margin: 0 auto;
-        }}
-        pre {{
-            background: #16213e;
-            padding: 15px;
-            border: 1px solid #00ff00;
-            border-radius: 5px;
-            line-height: 1.4;
-        }}
-        .title {{
-            color: #e94560;
-            text-align: center;
-        }}
-        .fan-box {{
-            text-align: center;
-        }}
-        .controls {{
-            margin-top: 20px;
-            text-align: center;
-        }}
-        .controls a {{
-            display: inline-block;
-            background: #16213e;
-            color: #00ff00;
-            padding: 8px 16px;
-            margin: 5px;
-            text-decoration: none;
-            border: 1px solid #00ff00;
-            border-radius: 3px;
-        }}
-        .controls a:hover {{
-            background: #00ff00;
-            color: #1a1a2e;
-        }}
-        .auto {{ color: #00ff00; }}
-        .manual {{ color: #ffff00; }}
-        .footer {{
-            margin-top: 20px;
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-        }}
-        .footer a {{
-            color: #e94560;
-        }}
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#FAF7F2" />
+<meta http-equiv="refresh" content="2" />
+<title>Pico Fan &mdash; Tomlinson Works</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23FAF7F2'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23C96442'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+<style>
+:root{
+  --ground:#FAF7F2;--surface:#FFFFFF;--ink:#1F1B16;--ink-soft:#44403C;
+  --muted:#78716C;--rule:#E7E2D7;--rule-strong:#C8C0B0;
+  --accent:#C96442;--accent-deep:#9A4A30;
+  --cool:#6A8AA8;--hot:#9A4A30;--good:#6F8B5F;
+  --display:"Fraunces","Times New Roman",serif;
+  --body:"DM Sans",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono","Courier New",monospace;
+  --pad-x:clamp(1.25rem,4vw,4rem);
+  --section-y:clamp(2.5rem,5vw,4.5rem);
+}
+*{box-sizing:border-box}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+p{margin:0 0 1rem}
+.container{padding-left:var(--pad-x);padding-right:var(--pad-x);max-width:72rem;margin:0 auto}
+section{padding-top:var(--section-y);padding-bottom:var(--section-y)}
+section+section,footer{border-top:1px solid var(--rule)}
+.eyebrow{font-family:var(--mono);font-size:.6875rem;letter-spacing:.25em;text-transform:uppercase;color:var(--accent);display:inline-flex;align-items:center;gap:.75rem;margin:0}
+.eyebrow::before{content:"";display:inline-block;width:1.5rem;height:1px;background:var(--accent)}
+.display{font-family:var(--display);letter-spacing:-.015em;line-height:1.05}
+.h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:300}
+.h2{font-size:clamp(1.5rem,3vw,2.25rem);font-weight:300;line-height:1.1}
+em{font-style:italic;font-weight:400}
+.site-header{background:rgba(250,247,242,.92);backdrop-filter:saturate(180%) blur(8px);-webkit-backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--rule)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 0}
+.wordmark{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--display);font-style:italic;font-weight:500;font-size:1.25rem}
+.wordmark .dot{width:6px;height:6px;background:var(--accent);border-radius:50%}
+.wordmark .suffix{font-family:var(--mono);font-style:normal;font-weight:400;font-size:.6875rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.nav-meta{font-family:var(--mono);font-size:.6875rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);display:inline-flex;align-items:center;gap:.5rem}
+.nav-meta .live{width:6px;height:6px;border-radius:50%;background:var(--good);animation:pulse 2s infinite}
+.nav-meta .live.off{background:var(--accent-deep);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(111,139,95,.5)}70%{box-shadow:0 0 0 8px rgba(111,139,95,0)}100%{box-shadow:0 0 0 0 rgba(111,139,95,0)}}
+#live h1{margin:1.5rem 0 0}#live h1 .line2{font-style:italic;font-weight:400}
+.hero-blurb{max-width:36rem;margin-top:1.75rem;font-size:clamp(1rem,1.3vw,1.0625rem);color:var(--ink-soft)}
+.live-grid{display:grid;gap:2.5rem;margin-top:3rem}
+@media (min-width:768px){.live-grid{grid-template-columns:5fr 7fr;gap:3.5rem;align-items:start}}
+.stage-art{position:relative;width:100%;max-width:320px;aspect-ratio:1;margin:1rem 0 2rem}
+.stage-art .ring{position:absolute;inset:0;border-radius:50%;border:1px solid var(--rule)}
+.stage-art .ring.inner{inset:14%;border-style:dashed;border-color:var(--rule-strong)}
+.fan-svg{position:absolute;inset:22%;transform-origin:center}
+.fan-svg.spinning{animation:spin var(--spin-speed,1.4s) linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.fan-blade{fill:var(--accent);opacity:.92}.fan-blade.b2{fill:var(--accent-deep)}
+.fan-hub{fill:var(--ground);stroke:var(--ink);stroke-width:1.5}.fan-cap{fill:var(--accent)}
+.readout{font-family:var(--display);font-weight:300;font-size:clamp(4rem,10vw,6.5rem);line-height:1;letter-spacing:-.03em;display:flex;align-items:baseline;gap:.5rem}
+.readout .unit{font-family:var(--mono);font-size:.875rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;font-weight:400}
+.readout-caption{font-family:var(--display);font-style:italic;font-size:1rem;color:var(--ink-soft);margin-top:.5rem}
+.telemetry{display:grid;gap:1.5rem}
+.row{padding-top:1.25rem;border-top:1px solid var(--accent)}
+.row-head{font-family:var(--mono);font-size:.75rem;letter-spacing:.15em;color:var(--accent-deep);display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.625rem;text-transform:uppercase}
+.row-head .label{display:inline-flex;align-items:center;gap:.75rem}
+.row-value{font-family:var(--display);font-weight:400;font-size:clamp(1.75rem,3.5vw,2.5rem);line-height:1;margin-bottom:.75rem;letter-spacing:-.02em}
+.row-value .small{font-family:var(--mono);font-size:.75rem;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-left:.5rem;font-weight:400}
+.row-value em{font-style:italic;color:var(--accent-deep);font-weight:400}
+.bar{height:2px;background:var(--rule);position:relative;overflow:hidden}
+.bar-fill{height:100%;background:var(--accent);transition:width .4s ease}
+.bar-fill.cool{background:var(--cool)}.bar-fill.hot{background:var(--hot)}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.625rem;letter-spacing:.15em;color:var(--muted);margin-top:.5rem;text-transform:uppercase}
+.meta-strip{display:grid;gap:1.5rem;margin-top:3rem}
+@media (min-width:600px){.meta-strip{grid-template-columns:repeat(4,1fr)}}
+.meta{border-top:1px solid var(--rule);padding-top:1rem}
+.meta .k{font-family:var(--mono);font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 .5rem}
+.meta .v{font-family:var(--display);font-size:1.125rem;font-weight:400}
+.meta .v em{font-style:italic;color:var(--accent-deep)}
+.controls-grid{display:grid;gap:2rem;margin-top:2.5rem}
+@media (min-width:768px){.controls-grid{grid-template-columns:3fr 9fr;gap:3.5rem;align-items:start}}
+.controls-label p{margin-top:1rem;font-family:var(--display);font-style:italic;font-size:1.0625rem;color:var(--ink-soft);max-width:14rem}
+.btn-row{display:flex;flex-wrap:wrap;border-top:1px solid var(--rule)}
+.btn{flex:1 1 auto;min-width:80px;padding:1rem .5rem;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);font-family:var(--display);font-size:1.25rem;font-weight:400;text-align:center;color:var(--ink);transition:all .2s ease;background:transparent}
+.btn:last-child{border-right:0}
+.btn:hover{color:var(--accent);font-style:italic;background:rgba(201,100,66,.04)}
+.btn .pct{font-family:var(--mono);font-size:.625rem;letter-spacing:.2em;color:var(--muted);display:block;margin-top:.25rem;text-transform:uppercase}
+.actions{display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:1.5rem}
+.action{display:inline-flex;align-items:center;gap:.5rem;font-size:.9375rem;color:var(--accent);border-bottom:1px solid currentColor;padding-bottom:2px;transition:gap .2s ease}
+.action:hover{gap:.875rem}
+.action.danger{color:var(--hot)}.action.muted{color:var(--ink-soft)}
+footer{padding:2.5rem var(--pad-x);max-width:72rem;margin:0 auto;display:flex;flex-direction:column;gap:1rem}
+.foot-credit{font-family:var(--display);font-style:italic;font-size:1rem;color:var(--ink-soft)}
+.foot-credit .by{color:var(--accent-deep)}
+.foot-meta{font-family:var(--mono);font-size:.6875rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin:0}
+@media (min-width:768px){footer{flex-direction:row;align-items:baseline;justify-content:space-between}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <pre class="title">
-+=======================================+
-|     NOCTUA FAN CONTROLLER v1.0        |
-|        Raspberry Pi Pico W            |
-+=======================================+
-        </pre>
-        
-        <pre class="fan-box">{}</pre>
-        
-        <pre>
-+---------------------------------------+
-| TEMP: {:.1f}C [{}]                     |
-| {}  {:.1f}C             |
-+---------------------------------------+
-| FAN:  {}%                             |
-| {}  {}%              |
-+---------------------------------------+
-| RPM:  {}                              |
-+---------------------------------------+
-| MODE:   <span class="{}">{}</span>                         |
-| UPTIME: {}                     |
-| WIFI:   {} ({})                |
-+---------------------------------------+
-        </pre>
-        
-        <div class="controls">
-            <div>Set Speed:</div>
-            <a href="/speed?pct=10">10%</a>
-            <a href="/speed?pct=30">30%</a>
-            <a href="/speed?pct=50">50%</a>
-            <a href="/speed?pct=70">70%</a>
-            <a href="/speed?pct=100">100%</a>
-            <br><br>
-            <a href="/auto">AUTO MODE</a>
-            <a href="/restart">RESTART</a>
+<header class="site-header">
+  <div class="container nav">
+    <a href="/" class="wordmark" aria-label="Tomlinson Works home">
+      <span>Tomlinson</span><span class="dot" aria-hidden="true"></span><span class="suffix">Works</span>
+    </a>
+    <span class="nav-meta">
+      <span class="live __WIFI_LIVE__" aria-hidden="true"></span>
+      __WIFI_LABEL__ &middot; refresh 2s
+    </span>
+  </div>
+</header>
+<main>
+  <section id="live" class="container">
+    <p class="eyebrow">Pico Fan &middot; Live Telemetry</p>
+    <h1 class="display h1">Thermal control,<br/><span class="line2">crafted in copper.</span></h1>
+    <p class="hero-blurb">Closed-loop airflow management for a Raspberry&nbsp;Pi&nbsp;Pico&nbsp;W. Real-time temperature, fan response, and tachometer feedback &mdash; built once, built well.</p>
+    <div class="live-grid">
+      <div class="stage">
+        <p class="eyebrow">01 &middot; Fan</p>
+        <div class="stage-art" style="--spin-speed:__SPIN__s">
+          <div class="ring"></div>
+          <div class="ring inner"></div>
+          <svg class="fan-svg __SPIN_CLASS__" viewBox="0 0 100 100" aria-hidden="true">
+            <g>
+              <path class="fan-blade" d="M50,50 Q60,15 50,5 Q40,15 50,50 Z"/>
+              <path class="fan-blade b2" d="M50,50 Q85,40 95,50 Q85,60 50,50 Z"/>
+              <path class="fan-blade" d="M50,50 Q40,85 50,95 Q60,85 50,50 Z"/>
+              <path class="fan-blade b2" d="M50,50 Q15,60 5,50 Q15,40 50,50 Z"/>
+            </g>
+            <circle class="fan-hub" cx="50" cy="50" r="10"/>
+            <circle class="fan-cap" cx="50" cy="50" r="3"/>
+          </svg>
         </div>
-        
-        <div class="footer">
-            <a href="/api">JSON API</a> | Auto-refresh: 2s
+        <div class="readout"><span>__SPEED__</span><span class="unit">%</span></div>
+        <p class="readout-caption"><em>__SPEED_CAPTION__</em></p>
+      </div>
+      <div class="telemetry">
+        <div class="row">
+          <div class="row-head"><span class="label"><span>02</span> &middot; Temperature</span><span>__TEMP_STATUS__</span></div>
+          <div class="row-value">__TEMP__<span class="small">&deg; C</span></div>
+          <div class="bar"><div class="bar-fill __TEMP_CLASS__" style="width:__TEMP_PCT__%"></div></div>
+          <div class="scale"><span>0</span><span>40</span><span>80</span></div>
         </div>
+        <div class="row">
+          <div class="row-head"><span class="label"><span>03</span> &middot; Fan Speed</span><span>__MODE_LABEL__</span></div>
+          <div class="row-value">__SPEED__<span class="small">%</span></div>
+          <div class="bar"><div class="bar-fill" style="width:__SPEED__%"></div></div>
+          <div class="scale"><span>0</span><span>50</span><span>100</span></div>
+        </div>
+        <div class="row">
+          <div class="row-head"><span class="label"><span>04</span> &middot; Tachometer</span><span>__RPM_STATUS__</span></div>
+          <div class="row-value">__RPM__<span class="small">RPM</span></div>
+          <div class="bar"><div class="bar-fill cool" style="width:__RPM_PCT__%"></div></div>
+          <div class="scale"><span>0</span><span>1500</span><span>3000</span></div>
+        </div>
+      </div>
     </div>
+    <div class="meta-strip">
+      <div class="meta"><p class="k">Mode</p><p class="v"><em>__MODE__</em></p></div>
+      <div class="meta"><p class="k">Uptime</p><p class="v">__UPTIME__</p></div>
+      <div class="meta"><p class="k">WiFi</p><p class="v">__WIFI_STATUS__</p></div>
+      <div class="meta"><p class="k">Curve</p><p class="v">30 &middot; 40 &middot; 50 &middot; 60 &middot; 70&deg;</p></div>
+    </div>
+  </section>
+  <section id="override" class="container">
+    <div class="controls-grid">
+      <div class="controls-label">
+        <p class="eyebrow">05 &middot; Override</p>
+        <p>Set a fixed duty cycle, or return the fan to the temperature curve.</p>
+      </div>
+      <div>
+        <div class="btn-row">
+          <a class="btn" href="/speed?pct=10"><span>10</span><span class="pct">percent</span></a>
+          <a class="btn" href="/speed?pct=30"><span>30</span><span class="pct">percent</span></a>
+          <a class="btn" href="/speed?pct=50"><span>50</span><span class="pct">percent</span></a>
+          <a class="btn" href="/speed?pct=70"><span>70</span><span class="pct">percent</span></a>
+          <a class="btn" href="/speed?pct=100"><span>100</span><span class="pct">percent</span></a>
+        </div>
+        <div class="actions">
+          <a class="action" href="/auto">Return to auto <span aria-hidden="true">&rarr;</span></a>
+          <a class="action muted" href="/api">JSON API <span aria-hidden="true">&#8599;</span></a>
+          <a class="action danger" href="/restart">Restart device <span aria-hidden="true">&#8635;</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>
+  <a href="/" class="wordmark">
+    <span>Tomlinson</span><span class="dot" aria-hidden="true"></span><span class="suffix">Works</span>
+  </a>
+  <p class="foot-credit"><span class="by">Led by Duane Tomlinson,</span> supported by Claude.</p>
+  <p class="foot-meta">Pico Fan &middot; New Port Richey, FL &middot; 2026</p>
+</footer>
 </body>
-</html>'''.format(
-        fan_art,
-        temp, temp_status,
-        temp_bar, temp,
-        speed,
-        speed_bar, speed,
-        rpm,
-        mode_class, mode,
-        uptime,
-        wifi_indicator, wifi_status['status']
+</html>'''
+
+
+def build_html_page(controller, temp, speed, rpm, wifi_status):
+    temp_pct = min(100, max(0, int((temp / 80.0) * 100)))
+    rpm_pct = min(100, max(0, int((rpm / 3000.0) * 100)))
+    mode = 'Manual' if controller.manual_override is not None else 'Auto'
+    mode_label = 'Manual override' if controller.manual_override is not None else 'Auto curve'
+
+    if speed < 5:
+        speed_caption = 'idle'
+    elif speed >= 95:
+        speed_caption = 'at full duty'
+    elif controller.manual_override is not None:
+        speed_caption = 'held by override'
+    else:
+        speed_caption = 'tracking temperature'
+
+    rpm_status = 'Stalled' if rpm < 50 and speed > 10 else ('Healthy' if rpm > 0 else 'Idle')
+
+    if wifi_status['connected']:
+        wifi_live = ''
+        wifi_label = 'System online'
+        wifi_status_text = 'Connected'
+    else:
+        wifi_live = 'off'
+        wifi_label = 'Reconnecting'
+        wifi_status_text = wifi_status['status'].title()
+
+    replacements = (
+        ('__SPIN__',         _spin_seconds(speed)),
+        ('__SPIN_CLASS__',   'spinning' if speed >= 5 else ''),
+        ('__SPEED_CAPTION__', speed_caption),
+        ('__SPEED__',        str(speed)),
+        ('__TEMP_STATUS__',  get_temp_status(temp)),
+        ('__TEMP_CLASS__',   _temp_class(temp)),
+        ('__TEMP_PCT__',     str(temp_pct)),
+        ('__TEMP__',         '{:.1f}'.format(temp)),
+        ('__MODE_LABEL__',   mode_label),
+        ('__RPM_STATUS__',   rpm_status),
+        ('__RPM_PCT__',      str(rpm_pct)),
+        ('__RPM__',          _format_thousands(rpm)),
+        ('__MODE__',         mode),
+        ('__UPTIME__',       controller.get_uptime()),
+        ('__WIFI_LIVE__',    wifi_live),
+        ('__WIFI_LABEL__',   wifi_label),
+        ('__WIFI_STATUS__',  wifi_status_text),
     )
+    html = HTML_TEMPLATE
+    for placeholder, value in replacements:
+        html = html.replace(placeholder, value)
     return html
 
 
 # ============ WEB SERVER ============
 def send_response(conn, body, content_type='application/json', status='200 OK'):
+    body_bytes = body.encode('utf-8')
     response = 'HTTP/1.1 {}\r\n'.format(status)
-    response += 'Content-Type: {}; charset=ascii\r\n'.format(content_type)
-    response += 'Content-Length: {}\r\n'.format(len(body))
+    response += 'Content-Type: {}; charset=utf-8\r\n'.format(content_type)
+    response += 'Content-Length: {}\r\n'.format(len(body_bytes))
     response += 'Connection: close\r\n\r\n'
-    conn.sendall(response.encode('ascii'))
-    conn.sendall(body.encode('ascii'))
+    conn.sendall(response.encode('utf-8'))
+    conn.sendall(body_bytes)
 
 
 def create_server():
