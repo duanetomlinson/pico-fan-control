@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fan Controller — Tomlinson Works</title>
+    <style>
+        :root {
+            --tw-ink:        #14171c;
+            --tw-panel:      #1c2128;
+            --tw-panel-2:    #232a33;
+            --tw-line:       #2f3742;
+            --tw-text:       #e8e6df;
+            --tw-mute:       #8a8f99;
+            --tw-copper:     #c97b3a;
+            --tw-copper-2:   #e09659;
+            --tw-brass:      #d9b26a;
+            --tw-cool:       #6fb3d2;
+            --tw-warm:       #e09659;
+            --tw-hot:        #d65a4a;
+            --tw-good:       #7ea96b;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: var(--tw-ink);
+            color: var(--tw-text);
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-image:
+                linear-gradient(var(--tw-ink), var(--tw-ink)),
+                repeating-linear-gradient(
+                    45deg,
+                    rgba(255,255,255,0.015) 0 2px,
+                    transparent 2px 8px
+                );
+            background-blend-mode: overlay;
+            min-height: 100vh;
+            padding: 24px 16px 48px;
+        }
+
+        .wrap {
+            max-width: 880px;
+            margin: 0 auto;
+        }
+
+        /* Header / brand bar */
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--tw-line);
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        .brand-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .mark {
+            width: 44px;
+            height: 44px;
+            border: 2px solid var(--tw-copper);
+            display: grid;
+            place-items: center;
+            font-family: 'Georgia', serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--tw-copper-2);
+            letter-spacing: -1px;
+        }
+        .brand-text .name {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+        }
+        .brand-text .sub {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--tw-mute);
+        }
+        .brand-right {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 12px;
+            color: var(--tw-mute);
+            text-align: right;
+        }
+        .brand-right .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--tw-good);
+            margin-right: 6px;
+            vertical-align: middle;
+            box-shadow: 0 0 8px var(--tw-good);
+        }
+
+        /* Title block */
+        .title {
+            margin-bottom: 24px;
+        }
+        .title h1 {
+            font-family: 'Georgia', serif;
+            font-weight: 700;
+            font-size: 28px;
+            margin: 0 0 4px;
+            letter-spacing: 0.2px;
+        }
+        .title .tag {
+            color: var(--tw-mute);
+            font-size: 13px;
+            letter-spacing: 0.4px;
+        }
+
+        /* Grid layout */
+        .grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 720px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--tw-panel);
+            border: 1px solid var(--tw-line);
+            border-radius: 4px;
+            padding: 20px;
+            position: relative;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 4px;
+            pointer-events: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+        .card h2 {
+            margin: 0 0 16px;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--tw-mute);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card h2 .pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            border: 1px solid var(--tw-line);
+            border-radius: 2px;
+            color: var(--tw-text);
+        }
+        .pill.auto   { color: var(--tw-good); border-color: var(--tw-good); }
+        .pill.manual { color: var(--tw-brass); border-color: var(--tw-brass); }
+
+        /* Fan visual */
+        .fan-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .fan-stage {
+            width: 220px;
+            height: 220px;
+            position: relative;
+            display: grid;
+            place-items: center;
+            margin: 8px 0 16px;
+        }
+        .ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 1px dashed var(--tw-line);
+        }
+        .ring.inner {
+            inset: 16px;
+            border-style: solid;
+            border-color: var(--tw-line);
+        }
+        .fan-svg {
+            width: 170px;
+            height: 170px;
+            animation: spin var(--spin-speed, 1.4s) linear infinite;
+            transform-origin: center;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        .fan-blade { fill: var(--tw-copper); opacity: 0.92; }
+        .fan-blade.b2 { fill: var(--tw-copper-2); }
+        .fan-hub  { fill: var(--tw-panel-2); stroke: var(--tw-brass); stroke-width: 2; }
+        .fan-cap  { fill: var(--tw-brass); }
+
+        .fan-readout {
+            text-align: center;
+        }
+        .fan-readout .big {
+            font-family: 'Georgia', serif;
+            font-size: 56px;
+            line-height: 1;
+            color: var(--tw-copper-2);
+            font-weight: 700;
+        }
+        .fan-readout .unit {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--tw-mute);
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        /* Metric rows */
+        .metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .metric .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 12px;
+            color: var(--tw-mute);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .metric .value {
+            color: var(--tw-text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+        .metric .value .num {
+            color: var(--tw-copper-2);
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .bar {
+            height: 8px;
+            background: var(--tw-panel-2);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--tw-copper), var(--tw-copper-2));
+            transition: width 0.4s ease;
+        }
+        .bar-fill.cool { background: linear-gradient(90deg, var(--tw-cool), #93c9e0); }
+        .bar-fill.warm { background: linear-gradient(90deg, var(--tw-warm), var(--tw-brass)); }
+        .bar-fill.hot  { background: linear-gradient(90deg, var(--tw-hot), #e88577); }
+
+        .scale {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--tw-mute);
+            margin-top: 4px;
+        }
+
+        /* Info strip */
+        .info {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+        @media (max-width: 560px) {
+            .info { grid-template-columns: repeat(2, 1fr); }
+        }
+        .info .cell {
+            background: var(--tw-panel);
+            border: 1px solid var(--tw-line);
+            padding: 12px;
+            border-radius: 3px;
+        }
+        .info .k {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--tw-mute);
+        }
+        .info .v {
+            margin-top: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--tw-text);
+        }
+
+        /* Controls */
+        .controls {
+            margin-top: 24px;
+            background: var(--tw-panel);
+            border: 1px solid var(--tw-line);
+            border-radius: 4px;
+            padding: 20px;
+        }
+        .controls h2 {
+            margin: 0 0 14px;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--tw-mute);
+            font-weight: 600;
+        }
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .btn {
+            flex: 1 1 auto;
+            min-width: 70px;
+            text-align: center;
+            text-decoration: none;
+            padding: 10px 14px;
+            background: transparent;
+            color: var(--tw-text);
+            border: 1px solid var(--tw-line);
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            letter-spacing: 1px;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .btn:hover {
+            border-color: var(--tw-copper);
+            color: var(--tw-copper-2);
+            background: rgba(201, 123, 58, 0.06);
+        }
+        .btn.primary {
+            border-color: var(--tw-copper);
+            color: var(--tw-copper-2);
+        }
+        .btn.primary:hover {
+            background: var(--tw-copper);
+            color: var(--tw-ink);
+        }
+        .btn.danger { border-color: rgba(214, 90, 74, 0.4); color: var(--tw-hot); }
+        .btn.danger:hover { background: rgba(214, 90, 74, 0.1); }
+
+        .divider {
+            height: 1px;
+            background: var(--tw-line);
+            margin: 14px 0;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 32px;
+            text-align: center;
+            color: var(--tw-mute);
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        .footer .credit {
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            font-size: 12px;
+            color: var(--tw-brass);
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        .footer a {
+            color: var(--tw-copper-2);
+            text-decoration: none;
+        }
+        .footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="brand">
+        <div class="brand-left">
+            <div class="mark">TW</div>
+            <div class="brand-text">
+                <div class="name">Tomlinson Works</div>
+                <div class="sub">Thermal Control · Pico W</div>
+            </div>
+        </div>
+        <div class="brand-right">
+            <div><span class="dot"></span>SYSTEM ONLINE</div>
+            <div style="margin-top:4px;">v1.0 · auto-refresh 2s</div>
+        </div>
+    </div>
+
+    <div class="title">
+        <h1>Noctua Fan Controller</h1>
+        <div class="tag">Real-time thermal management for Raspberry Pi Pico W</div>
+    </div>
+
+    <div class="grid">
+
+        <!-- Fan card -->
+        <div class="card fan-card">
+            <h2>Fan · Live <span class="pill auto">AUTO</span></h2>
+
+            <div class="fan-stage" style="--spin-speed: 0.6s;">
+                <div class="ring"></div>
+                <div class="ring inner"></div>
+                <svg class="fan-svg" viewBox="0 0 100 100">
+                    <g>
+                        <path class="fan-blade" d="M50,50 Q60,15 50,5 Q40,15 50,50 Z"/>
+                        <path class="fan-blade b2" d="M50,50 Q85,40 95,50 Q85,60 50,50 Z"/>
+                        <path class="fan-blade" d="M50,50 Q40,85 50,95 Q60,85 50,50 Z"/>
+                        <path class="fan-blade b2" d="M50,50 Q15,60 5,50 Q15,40 50,50 Z"/>
+                    </g>
+                    <circle class="fan-hub" cx="50" cy="50" r="10"/>
+                    <circle class="fan-cap" cx="50" cy="50" r="3"/>
+                </svg>
+            </div>
+
+            <div class="fan-readout">
+                <div class="big">70<span style="font-size:32px;color:var(--tw-mute);">%</span></div>
+                <div class="unit">DUTY CYCLE</div>
+            </div>
+        </div>
+
+        <!-- Metrics card -->
+        <div class="card">
+            <h2>Telemetry <span class="pill">LIVE</span></h2>
+
+            <div class="metrics">
+                <div class="metric">
+                    <div class="label-row">
+                        <span>Temperature</span>
+                        <span class="value"><span class="num">52.3</span> °C · WARM</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill warm" style="width: 65%;"></div></div>
+                    <div class="scale"><span>0</span><span>40</span><span>80°C</span></div>
+                </div>
+
+                <div class="metric">
+                    <div class="label-row">
+                        <span>Fan Speed</span>
+                        <span class="value"><span class="num">70</span> %</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill" style="width: 70%;"></div></div>
+                    <div class="scale"><span>0</span><span>50</span><span>100%</span></div>
+                </div>
+
+                <div class="metric">
+                    <div class="label-row">
+                        <span>Tachometer</span>
+                        <span class="value"><span class="num">1842</span> RPM</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill" style="width: 61%;"></div></div>
+                    <div class="scale"><span>0</span><span>1500</span><span>3000 RPM</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info strip -->
+    <div class="info">
+        <div class="cell">
+            <div class="k">Mode</div>
+            <div class="v" style="color:var(--tw-good);">AUTO</div>
+        </div>
+        <div class="cell">
+            <div class="k">Uptime</div>
+            <div class="v">2h 14m 09s</div>
+        </div>
+        <div class="cell">
+            <div class="k">WiFi</div>
+            <div class="v">OK · CONNECTED</div>
+        </div>
+        <div class="cell">
+            <div class="k">Curve</div>
+            <div class="v">30/40/50/60/70°C</div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <h2>Manual Override</h2>
+        <div class="btn-row">
+            <a href="#" class="btn">10%</a>
+            <a href="#" class="btn">30%</a>
+            <a href="#" class="btn">50%</a>
+            <a href="#" class="btn">70%</a>
+            <a href="#" class="btn">100%</a>
+        </div>
+        <div class="divider"></div>
+        <div class="btn-row">
+            <a href="#" class="btn primary">AUTO MODE</a>
+            <a href="#" class="btn">JSON API</a>
+            <a href="#" class="btn danger">RESTART</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="credit">Led by Duane Tomlinson, supported by Claude</div>
+        <div>Tomlinson Works · Thermal Control · © 2026</div>
+    </div>
+
+</div>
+</body>
+</html>
