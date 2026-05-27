@@ -1,524 +1,563 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fan Controller — Tomlinson Works</title>
-    <style>
-        :root {
-            --tw-ink:        #14171c;
-            --tw-panel:      #1c2128;
-            --tw-panel-2:    #232a33;
-            --tw-line:       #2f3742;
-            --tw-text:       #e8e6df;
-            --tw-mute:       #8a8f99;
-            --tw-copper:     #c97b3a;
-            --tw-copper-2:   #e09659;
-            --tw-brass:      #d9b26a;
-            --tw-cool:       #6fb3d2;
-            --tw-warm:       #e09659;
-            --tw-hot:        #d65a4a;
-            --tw-good:       #7ea96b;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#FAF7F2" />
+<title>Pico Fan — Tomlinson Works</title>
 
-        * { box-sizing: border-box; }
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
 
-        html, body {
-            margin: 0;
-            padding: 0;
-            background: var(--tw-ink);
-            color: var(--tw-text);
-            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
+<style>
+  :root {
+    --ground:        #FAF7F2;
+    --surface:       #FFFFFF;
+    --ink:           #1F1B16;
+    --ink-soft:      #44403C;
+    --muted:         #78716C;
+    --rule:          #E7E2D7;
+    --rule-strong:   #C8C0B0;
+    --accent:        #C96442;
+    --accent-deep:   #9A4A30;
+    --cool:          #6A8AA8;
+    --warm:          #C96442;
+    --hot:           #9A4A30;
+    --good:          #6F8B5F;
 
-        body {
-            background-image:
-                linear-gradient(var(--tw-ink), var(--tw-ink)),
-                repeating-linear-gradient(
-                    45deg,
-                    rgba(255,255,255,0.015) 0 2px,
-                    transparent 2px 8px
-                );
-            background-blend-mode: overlay;
-            min-height: 100vh;
-            padding: 24px 16px 48px;
-        }
+    --display: "Fraunces", "Times New Roman", serif;
+    --body:    "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono:    "JetBrains Mono", "Courier New", monospace;
 
-        .wrap {
-            max-width: 880px;
-            margin: 0 auto;
-        }
+    --pad-x:    clamp(1.25rem, 4vw, 4rem);
+    --section-y: clamp(2.5rem, 5vw, 4.5rem);
+    --measure-narrow: 36rem;
+  }
 
-        /* Header / brand bar */
-        .brand {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--tw-line);
-            padding-bottom: 16px;
-            margin-bottom: 24px;
-        }
-        .brand-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .mark {
-            width: 44px;
-            height: 44px;
-            border: 2px solid var(--tw-copper);
-            display: grid;
-            place-items: center;
-            font-family: 'Georgia', serif;
-            font-weight: 700;
-            font-size: 20px;
-            color: var(--tw-copper-2);
-            letter-spacing: -1px;
-        }
-        .brand-text .name {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            font-weight: 700;
-            font-size: 18px;
-            letter-spacing: 0.5px;
-        }
-        .brand-text .sub {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--tw-mute);
-        }
-        .brand-right {
-            font-family: 'JetBrains Mono', 'Consolas', monospace;
-            font-size: 12px;
-            color: var(--tw-mute);
-            text-align: right;
-        }
-        .brand-right .dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--tw-good);
-            margin-right: 6px;
-            vertical-align: middle;
-            box-shadow: 0 0 8px var(--tw-good);
-        }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
 
-        /* Title block */
-        .title {
-            margin-bottom: 24px;
-        }
-        .title h1 {
-            font-family: 'Georgia', serif;
-            font-weight: 700;
-            font-size: 28px;
-            margin: 0 0 4px;
-            letter-spacing: 0.2px;
-        }
-        .title .tag {
-            color: var(--tw-mute);
-            font-size: 13px;
-            letter-spacing: 0.4px;
-        }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-        /* Grid layout */
-        .grid {
-            display: grid;
-            grid-template-columns: 1.1fr 1fr;
-            gap: 16px;
-        }
-        @media (max-width: 720px) {
-            .grid { grid-template-columns: 1fr; }
-        }
+  a { color: inherit; text-decoration: none; }
+  p { margin: 0 0 1rem; }
 
-        .card {
-            background: var(--tw-panel);
-            border: 1px solid var(--tw-line);
-            border-radius: 4px;
-            padding: 20px;
-            position: relative;
-        }
-        .card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 4px;
-            pointer-events: none;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
-        }
-        .card h2 {
-            margin: 0 0 16px;
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--tw-mute);
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .card h2 .pill {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 1px;
-            padding: 3px 8px;
-            border: 1px solid var(--tw-line);
-            border-radius: 2px;
-            color: var(--tw-text);
-        }
-        .pill.auto   { color: var(--tw-good); border-color: var(--tw-good); }
-        .pill.manual { color: var(--tw-brass); border-color: var(--tw-brass); }
+  .container {
+    padding-left: var(--pad-x);
+    padding-right: var(--pad-x);
+    max-width: 72rem;
+    margin: 0 auto;
+  }
+  section { padding-top: var(--section-y); padding-bottom: var(--section-y); }
+  section + section, footer { border-top: 1px solid var(--rule); }
 
-        /* Fan visual */
-        .fan-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .fan-stage {
-            width: 220px;
-            height: 220px;
-            position: relative;
-            display: grid;
-            place-items: center;
-            margin: 8px 0 16px;
-        }
-        .ring {
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            border: 1px dashed var(--tw-line);
-        }
-        .ring.inner {
-            inset: 16px;
-            border-style: solid;
-            border-color: var(--tw-line);
-        }
-        .fan-svg {
-            width: 170px;
-            height: 170px;
-            animation: spin var(--spin-speed, 1.4s) linear infinite;
-            transform-origin: center;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
-        .fan-blade { fill: var(--tw-copper); opacity: 0.92; }
-        .fan-blade.b2 { fill: var(--tw-copper-2); }
-        .fan-hub  { fill: var(--tw-panel-2); stroke: var(--tw-brass); stroke-width: 2; }
-        .fan-cap  { fill: var(--tw-brass); }
+  /* ── Typography ─────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+  }
+  .eyebrow::before {
+    content: "";
+    display: inline-block;
+    width: 1.5rem; height: 1px;
+    background: var(--accent);
+  }
+  .display {
+    font-family: var(--display);
+    font-feature-settings: "ss01", "ss02";
+    letter-spacing: -0.015em;
+    line-height: 1.05;
+  }
+  .h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 300; }
+  .h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 300; line-height: 1.1; }
+  .h3 { font-size: clamp(1.25rem, 2vw, 1.5rem); font-weight: 400; }
+  em, .italic { font-style: italic; font-weight: 400; }
 
-        .fan-readout {
-            text-align: center;
-        }
-        .fan-readout .big {
-            font-family: 'Georgia', serif;
-            font-size: 56px;
-            line-height: 1;
-            color: var(--tw-copper-2);
-            font-weight: 700;
-        }
-        .fan-readout .unit {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            color: var(--tw-mute);
-            letter-spacing: 2px;
-            margin-top: 4px;
-        }
+  /* ── Header ─────────────────────────────────────────────────── */
+  .site-header {
+    background: rgba(250, 247, 242, 0.92);
+    backdrop-filter: saturate(180%) blur(8px);
+    -webkit-backdrop-filter: saturate(180%) blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 1.25rem; padding-bottom: 1.25rem;
+  }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--display); font-style: italic; font-weight: 500;
+    font-size: 1.25rem;
+  }
+  .wordmark .dot {
+    width: 6px; height: 6px; background: var(--accent);
+    border-radius: 50%;
+  }
+  .wordmark .suffix {
+    font-family: var(--mono); font-style: normal; font-weight: 400;
+    font-size: 0.6875rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .nav-meta {
+    font-family: var(--mono); font-size: 0.6875rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted);
+    display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  .nav-meta .live {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--good);
+    box-shadow: 0 0 0 0 rgba(111, 139, 95, 0.6);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0   rgba(111, 139, 95, 0.5); }
+    70%  { box-shadow: 0 0 0 8px rgba(111, 139, 95, 0);   }
+    100% { box-shadow: 0 0 0 0   rgba(111, 139, 95, 0);   }
+  }
 
-        /* Metric rows */
-        .metrics {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .metric .label-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            font-size: 12px;
-            color: var(--tw-mute);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-        .metric .value {
-            color: var(--tw-text);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 15px;
-            letter-spacing: 0;
-            text-transform: none;
-        }
-        .metric .value .num {
-            color: var(--tw-copper-2);
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .bar {
-            height: 8px;
-            background: var(--tw-panel-2);
-            border-radius: 2px;
-            overflow: hidden;
-            position: relative;
-        }
-        .bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--tw-copper), var(--tw-copper-2));
-            transition: width 0.4s ease;
-        }
-        .bar-fill.cool { background: linear-gradient(90deg, var(--tw-cool), #93c9e0); }
-        .bar-fill.warm { background: linear-gradient(90deg, var(--tw-warm), var(--tw-brass)); }
-        .bar-fill.hot  { background: linear-gradient(90deg, var(--tw-hot), #e88577); }
+  /* ── Hero ──────────────────────────────────────────────────── */
+  #hero h1 { margin: 1.5rem 0 0; }
+  #hero h1 .line2 { font-style: italic; font-weight: 400; }
+  .hero-blurb {
+    max-width: var(--measure-narrow);
+    margin-top: 1.75rem;
+    font-size: clamp(1rem, 1.3vw, 1.0625rem);
+    color: var(--ink-soft);
+  }
 
-        .scale {
-            display: flex;
-            justify-content: space-between;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: var(--tw-mute);
-            margin-top: 4px;
-        }
+  /* ── Live section grid ─────────────────────────────────────── */
+  .live-grid { display: grid; gap: 2.5rem; margin-top: 3rem; }
+  @media (min-width: 768px) {
+    .live-grid {
+      grid-template-columns: 5fr 7fr;
+      gap: 3.5rem;
+      align-items: start;
+    }
+  }
 
-        /* Info strip */
-        .info {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-top: 16px;
-        }
-        @media (max-width: 560px) {
-            .info { grid-template-columns: repeat(2, 1fr); }
-        }
-        .info .cell {
-            background: var(--tw-panel);
-            border: 1px solid var(--tw-line);
-            padding: 12px;
-            border-radius: 3px;
-        }
-        .info .k {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--tw-mute);
-        }
-        .info .v {
-            margin-top: 4px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            color: var(--tw-text);
-        }
+  /* Fan stage (left) */
+  .stage { text-align: left; }
+  .stage-art {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1;
+    margin: 1rem 0 2rem;
+  }
+  .stage-art .ring {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    border: 1px solid var(--rule);
+  }
+  .stage-art .ring.inner {
+    inset: 14%;
+    border-style: dashed;
+    border-color: var(--rule-strong);
+  }
+  .fan-svg {
+    position: absolute; inset: 22%;
+    animation: spin var(--spin-speed, 1.4s) linear infinite;
+    transform-origin: center;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .fan-blade { fill: var(--accent); opacity: 0.92; }
+  .fan-blade.b2 { fill: var(--accent-deep); }
+  .fan-hub  { fill: var(--ground); stroke: var(--ink); stroke-width: 1.5; }
+  .fan-cap  { fill: var(--accent); }
 
-        /* Controls */
-        .controls {
-            margin-top: 24px;
-            background: var(--tw-panel);
-            border: 1px solid var(--tw-line);
-            border-radius: 4px;
-            padding: 20px;
-        }
-        .controls h2 {
-            margin: 0 0 14px;
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--tw-mute);
-            font-weight: 600;
-        }
-        .btn-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .btn {
-            flex: 1 1 auto;
-            min-width: 70px;
-            text-align: center;
-            text-decoration: none;
-            padding: 10px 14px;
-            background: transparent;
-            color: var(--tw-text);
-            border: 1px solid var(--tw-line);
-            border-radius: 3px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            letter-spacing: 1px;
-            transition: all 0.15s ease;
-            cursor: pointer;
-        }
-        .btn:hover {
-            border-color: var(--tw-copper);
-            color: var(--tw-copper-2);
-            background: rgba(201, 123, 58, 0.06);
-        }
-        .btn.primary {
-            border-color: var(--tw-copper);
-            color: var(--tw-copper-2);
-        }
-        .btn.primary:hover {
-            background: var(--tw-copper);
-            color: var(--tw-ink);
-        }
-        .btn.danger { border-color: rgba(214, 90, 74, 0.4); color: var(--tw-hot); }
-        .btn.danger:hover { background: rgba(214, 90, 74, 0.1); }
+  .readout {
+    font-family: var(--display);
+    font-weight: 300;
+    font-size: clamp(4rem, 10vw, 6.5rem);
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.03em;
+    display: flex; align-items: baseline; gap: 0.5rem;
+  }
+  .readout .unit {
+    font-family: var(--mono);
+    font-size: 0.875rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+  .readout-caption {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--ink-soft);
+    margin-top: 0.5rem;
+  }
 
-        .divider {
-            height: 1px;
-            background: var(--tw-line);
-            margin: 14px 0;
-        }
+  /* Telemetry rows (right) */
+  .telemetry { display: grid; gap: 1.5rem; }
+  .row {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--accent);
+  }
+  .row-head {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--accent-deep);
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 0.625rem;
+    text-transform: uppercase;
+  }
+  .row-head .label { display: inline-flex; align-items: center; gap: 0.75rem; }
+  .row-head .num   { font-weight: 500; }
+  .row-value {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+  }
+  .row-value .small {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-left: 0.5rem;
+    font-weight: 400;
+  }
+  .row-value em {
+    font-family: var(--display);
+    font-style: italic;
+    color: var(--accent-deep);
+    font-weight: 400;
+  }
+  .bar {
+    height: 2px;
+    background: var(--rule);
+    position: relative;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.4s ease;
+  }
+  .bar-fill.cool { background: var(--cool); }
+  .bar-fill.hot  { background: var(--hot); }
+  .scale {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+  }
 
-        /* Footer */
-        .footer {
-            margin-top: 32px;
-            text-align: center;
-            color: var(--tw-mute);
-            font-size: 11px;
-            letter-spacing: 1px;
-        }
-        .footer .credit {
-            font-family: 'Georgia', serif;
-            font-style: italic;
-            font-size: 12px;
-            color: var(--tw-brass);
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
-        }
-        .footer a {
-            color: var(--tw-copper-2);
-            text-decoration: none;
-        }
-        .footer a:hover { text-decoration: underline; }
-    </style>
+  /* ── Meta strip ────────────────────────────────────────────── */
+  .meta-strip {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+  @media (min-width: 600px) {
+    .meta-strip { grid-template-columns: repeat(4, 1fr); }
+  }
+  .meta {
+    border-top: 1px solid var(--rule);
+    padding-top: 1rem;
+  }
+  .meta .k {
+    font-family: var(--mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 0.5rem;
+  }
+  .meta .v {
+    font-family: var(--display);
+    font-size: 1.125rem;
+    font-weight: 400;
+    color: var(--ink);
+  }
+  .meta .v em { font-style: italic; color: var(--accent-deep); }
+
+  /* ── Controls ──────────────────────────────────────────────── */
+  .controls-grid { display: grid; gap: 2rem; margin-top: 2.5rem; }
+  @media (min-width: 768px) {
+    .controls-grid { grid-template-columns: 3fr 9fr; gap: 3.5rem; align-items: start; }
+  }
+  .controls-label .eyebrow { margin-top: 0.5rem; }
+  .controls-label p {
+    margin-top: 1rem;
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 1.0625rem;
+    color: var(--ink-soft);
+    max-width: 14rem;
+  }
+  .btn-row {
+    display: flex; flex-wrap: wrap; gap: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .btn {
+    flex: 1 1 auto;
+    min-width: 80px;
+    padding: 1rem 0.5rem;
+    border-bottom: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+    font-family: var(--display);
+    font-size: 1.25rem;
+    font-weight: 400;
+    text-align: center;
+    color: var(--ink);
+    transition: all 200ms ease;
+    cursor: pointer;
+    background: transparent;
+  }
+  .btn:last-child { border-right: 0; }
+  .btn:hover {
+    color: var(--accent);
+    font-style: italic;
+    background: rgba(201, 100, 66, 0.04);
+  }
+  .btn .num { font-feature-settings: "lnum"; }
+  .btn .pct {
+    font-family: var(--mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    display: block;
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+  }
+
+  .actions {
+    display: flex; flex-wrap: wrap; gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .action {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--body);
+    font-size: 0.9375rem;
+    color: var(--accent);
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 2px;
+    transition: gap 200ms ease;
+  }
+  .action:hover { gap: 0.875rem; }
+  .action.danger { color: var(--hot); }
+  .action.muted  { color: var(--ink-soft); }
+
+  /* ── Footer ────────────────────────────────────────────────── */
+  footer {
+    padding: 2.5rem var(--pad-x);
+    max-width: 72rem;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .foot-credit {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--ink-soft);
+  }
+  .foot-credit .by { color: var(--accent-deep); }
+  .foot-meta {
+    font-family: var(--mono); font-size: 0.6875rem;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+  @media (min-width: 768px) {
+    footer { flex-direction: row; align-items: baseline; justify-content: space-between; }
+  }
+</style>
 </head>
 <body>
-<div class="wrap">
 
-    <div class="brand">
-        <div class="brand-left">
-            <div class="mark">TW</div>
-            <div class="brand-text">
-                <div class="name">Tomlinson Works</div>
-                <div class="sub">Thermal Control · Pico W</div>
-            </div>
+<header class="site-header">
+  <div class="container nav">
+    <a href="#" class="wordmark" aria-label="Tomlinson Works home">
+      <span>Tomlinson</span>
+      <span class="dot" aria-hidden="true"></span>
+      <span class="suffix">Works</span>
+    </a>
+    <span class="nav-meta">
+      <span class="live" aria-hidden="true"></span>
+      System Online · refresh 2s
+    </span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Hero / Telemetry -->
+  <section id="live" class="container">
+    <p class="eyebrow">Pico Fan · Live Telemetry</p>
+    <h1 class="display h1">
+      Thermal control,<br/>
+      <span class="line2">crafted in copper.</span>
+    </h1>
+    <p class="hero-blurb">
+      Closed-loop airflow management for a Raspberry&nbsp;Pi&nbsp;Pico&nbsp;W cluster.
+      Real-time temperature, fan response, and tachometer feedback — built once,
+      built well.
+    </p>
+
+    <div class="live-grid">
+
+      <!-- Fan visual -->
+      <div class="stage">
+        <p class="eyebrow">01 · Fan</p>
+        <div class="stage-art" style="--spin-speed: 0.55s;">
+          <div class="ring"></div>
+          <div class="ring inner"></div>
+          <svg class="fan-svg" viewBox="0 0 100 100" aria-hidden="true">
+            <g>
+              <path class="fan-blade"    d="M50,50 Q60,15 50,5  Q40,15 50,50 Z"/>
+              <path class="fan-blade b2" d="M50,50 Q85,40 95,50 Q85,60 50,50 Z"/>
+              <path class="fan-blade"    d="M50,50 Q40,85 50,95 Q60,85 50,50 Z"/>
+              <path class="fan-blade b2" d="M50,50 Q15,60 5,50  Q15,40 50,50 Z"/>
+            </g>
+            <circle class="fan-hub" cx="50" cy="50" r="10"/>
+            <circle class="fan-cap" cx="50" cy="50" r="3"/>
+          </svg>
         </div>
-        <div class="brand-right">
-            <div><span class="dot"></span>SYSTEM ONLINE</div>
-            <div style="margin-top:4px;">v1.0 · auto-refresh 2s</div>
+        <div class="readout">
+          <span>70</span><span class="unit">%</span>
         </div>
+        <p class="readout-caption"><em>holding at duty cycle</em></p>
+      </div>
+
+      <!-- Telemetry rows -->
+      <div class="telemetry">
+
+        <div class="row">
+          <div class="row-head">
+            <span class="label"><span class="num">02</span> · Temperature</span>
+            <span>Warm</span>
+          </div>
+          <div class="row-value">
+            52.3<span class="small">° C</span>
+            <em>· steady</em>
+          </div>
+          <div class="bar"><div class="bar-fill" style="width: 65%;"></div></div>
+          <div class="scale"><span>0</span><span>40</span><span>80</span></div>
+        </div>
+
+        <div class="row">
+          <div class="row-head">
+            <span class="label"><span class="num">03</span> · Fan Speed</span>
+            <span>Auto curve</span>
+          </div>
+          <div class="row-value">
+            70<span class="small">%</span>
+            <em>· tracking</em>
+          </div>
+          <div class="bar"><div class="bar-fill" style="width: 70%;"></div></div>
+          <div class="scale"><span>0</span><span>50</span><span>100</span></div>
+        </div>
+
+        <div class="row">
+          <div class="row-head">
+            <span class="label"><span class="num">04</span> · Tachometer</span>
+            <span>Healthy</span>
+          </div>
+          <div class="row-value">
+            1,842<span class="small">RPM</span>
+          </div>
+          <div class="bar"><div class="bar-fill cool" style="width: 61%;"></div></div>
+          <div class="scale"><span>0</span><span>1500</span><span>3000</span></div>
+        </div>
+
+      </div>
     </div>
 
-    <div class="title">
-        <h1>Noctua Fan Controller</h1>
-        <div class="tag">Real-time thermal management for Raspberry Pi Pico W</div>
+    <!-- Meta strip -->
+    <div class="meta-strip">
+      <div class="meta">
+        <p class="k">Mode</p>
+        <p class="v"><em>Auto</em></p>
+      </div>
+      <div class="meta">
+        <p class="k">Uptime</p>
+        <p class="v">2h 14m 09s</p>
+      </div>
+      <div class="meta">
+        <p class="k">WiFi</p>
+        <p class="v">Connected</p>
+      </div>
+      <div class="meta">
+        <p class="k">Curve</p>
+        <p class="v">30 · 40 · 50 · 60 · 70°</p>
+      </div>
     </div>
+  </section>
 
-    <div class="grid">
-
-        <!-- Fan card -->
-        <div class="card fan-card">
-            <h2>Fan · Live <span class="pill auto">AUTO</span></h2>
-
-            <div class="fan-stage" style="--spin-speed: 0.6s;">
-                <div class="ring"></div>
-                <div class="ring inner"></div>
-                <svg class="fan-svg" viewBox="0 0 100 100">
-                    <g>
-                        <path class="fan-blade" d="M50,50 Q60,15 50,5 Q40,15 50,50 Z"/>
-                        <path class="fan-blade b2" d="M50,50 Q85,40 95,50 Q85,60 50,50 Z"/>
-                        <path class="fan-blade" d="M50,50 Q40,85 50,95 Q60,85 50,50 Z"/>
-                        <path class="fan-blade b2" d="M50,50 Q15,60 5,50 Q15,40 50,50 Z"/>
-                    </g>
-                    <circle class="fan-hub" cx="50" cy="50" r="10"/>
-                    <circle class="fan-cap" cx="50" cy="50" r="3"/>
-                </svg>
-            </div>
-
-            <div class="fan-readout">
-                <div class="big">70<span style="font-size:32px;color:var(--tw-mute);">%</span></div>
-                <div class="unit">DUTY CYCLE</div>
-            </div>
-        </div>
-
-        <!-- Metrics card -->
-        <div class="card">
-            <h2>Telemetry <span class="pill">LIVE</span></h2>
-
-            <div class="metrics">
-                <div class="metric">
-                    <div class="label-row">
-                        <span>Temperature</span>
-                        <span class="value"><span class="num">52.3</span> °C · WARM</span>
-                    </div>
-                    <div class="bar"><div class="bar-fill warm" style="width: 65%;"></div></div>
-                    <div class="scale"><span>0</span><span>40</span><span>80°C</span></div>
-                </div>
-
-                <div class="metric">
-                    <div class="label-row">
-                        <span>Fan Speed</span>
-                        <span class="value"><span class="num">70</span> %</span>
-                    </div>
-                    <div class="bar"><div class="bar-fill" style="width: 70%;"></div></div>
-                    <div class="scale"><span>0</span><span>50</span><span>100%</span></div>
-                </div>
-
-                <div class="metric">
-                    <div class="label-row">
-                        <span>Tachometer</span>
-                        <span class="value"><span class="num">1842</span> RPM</span>
-                    </div>
-                    <div class="bar"><div class="bar-fill" style="width: 61%;"></div></div>
-                    <div class="scale"><span>0</span><span>1500</span><span>3000 RPM</span></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Info strip -->
-    <div class="info">
-        <div class="cell">
-            <div class="k">Mode</div>
-            <div class="v" style="color:var(--tw-good);">AUTO</div>
-        </div>
-        <div class="cell">
-            <div class="k">Uptime</div>
-            <div class="v">2h 14m 09s</div>
-        </div>
-        <div class="cell">
-            <div class="k">WiFi</div>
-            <div class="v">OK · CONNECTED</div>
-        </div>
-        <div class="cell">
-            <div class="k">Curve</div>
-            <div class="v">30/40/50/60/70°C</div>
-        </div>
-    </div>
-
-    <!-- Controls -->
-    <div class="controls">
-        <h2>Manual Override</h2>
+  <!-- Controls -->
+  <section id="override" class="container">
+    <div class="controls-grid">
+      <div class="controls-label">
+        <p class="eyebrow">05 · Override</p>
+        <p>Set a fixed duty cycle, or return the fan to the temperature curve.</p>
+      </div>
+      <div>
         <div class="btn-row">
-            <a href="#" class="btn">10%</a>
-            <a href="#" class="btn">30%</a>
-            <a href="#" class="btn">50%</a>
-            <a href="#" class="btn">70%</a>
-            <a href="#" class="btn">100%</a>
+          <a class="btn" href="#"><span class="num">10</span><span class="pct">percent</span></a>
+          <a class="btn" href="#"><span class="num">30</span><span class="pct">percent</span></a>
+          <a class="btn" href="#"><span class="num">50</span><span class="pct">percent</span></a>
+          <a class="btn" href="#"><span class="num">70</span><span class="pct">percent</span></a>
+          <a class="btn" href="#"><span class="num">100</span><span class="pct">percent</span></a>
         </div>
-        <div class="divider"></div>
-        <div class="btn-row">
-            <a href="#" class="btn primary">AUTO MODE</a>
-            <a href="#" class="btn">JSON API</a>
-            <a href="#" class="btn danger">RESTART</a>
+        <div class="actions">
+          <a class="action" href="#">Return to auto <span aria-hidden="true">→</span></a>
+          <a class="action muted" href="#">JSON API <span aria-hidden="true">↗</span></a>
+          <a class="action danger" href="#">Restart device <span aria-hidden="true">↻</span></a>
         </div>
+      </div>
     </div>
+  </section>
 
-    <div class="footer">
-        <div class="credit">Led by Duane Tomlinson, supported by Claude</div>
-        <div>Tomlinson Works · Thermal Control · © 2026</div>
-    </div>
+</main>
 
-</div>
+<footer>
+  <a href="#" class="wordmark">
+    <span>Tomlinson</span>
+    <span class="dot" aria-hidden="true"></span>
+    <span class="suffix">Works</span>
+  </a>
+  <p class="foot-credit"><span class="by">Led by Duane Tomlinson,</span> supported by Claude.</p>
+  <p class="foot-meta">Pico Fan · New Port Richey, FL · 2026</p>
+</footer>
+
 </body>
 </html>
