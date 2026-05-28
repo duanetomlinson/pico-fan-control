@@ -347,7 +347,7 @@ footer{padding:2.5rem var(--pad-x);max-width:72rem;margin:0 auto;display:flex;fl
       <div class="telemetry">
         <div class="row">
           <div class="row-head"><span class="label"><span>02</span> &middot; Temperature</span><span>__TEMP_STATUS__</span></div>
-          <div class="row-value">__TEMP__<span class="small">&deg; C</span></div>
+          <div class="row-value">__TEMP__<span class="small">&deg;C</span></div>
           <div class="bar"><div class="bar-fill __TEMP_CLASS__" style="width:__TEMP_PCT__%"></div></div>
           <div class="scale"><span>0</span><span>40</span><span>80</span></div>
         </div>
@@ -414,10 +414,10 @@ def build_html_page(controller, temp, speed, rpm, wifi_status):
 
     if speed < 5:
         speed_caption = 'idle'
-    elif speed >= 95:
-        speed_caption = 'at full duty'
     elif controller.manual_override is not None:
         speed_caption = 'held by override'
+    elif speed >= 95:
+        speed_caption = 'at full duty'
     else:
         speed_caption = 'tracking temperature'
 
@@ -430,7 +430,7 @@ def build_html_page(controller, temp, speed, rpm, wifi_status):
     else:
         wifi_live = 'off'
         wifi_label = 'Reconnecting'
-        wifi_status_text = wifi_status['status'].title()
+        wifi_status_text = wifi_status['status'].replace('_', ' ').title()
 
     replacements = (
         ('__SPIN__',         _spin_seconds(speed)),
@@ -481,7 +481,7 @@ def create_server():
 def handle_request(conn, controller, wifi_manager):
     """Handle a single HTTP request."""
     try:
-        request = conn.recv(1024).decode('ascii')
+        request = conn.recv(1024).decode('utf-8', 'ignore')
     except:
         request = ''
     
